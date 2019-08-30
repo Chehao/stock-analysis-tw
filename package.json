@@ -1,6 +1,7 @@
 {
   "name": "stock-analysis-tw",
   "version": "0.1.0",
+  "homepage": "https://chehao.github.io/stock-analysis-tw/",
   "private": true,
   "dependencies": {
     "@types/jest": "24.0.17",
@@ -8,6 +9,7 @@
     "@types/react": "16.9.1",
     "@types/react-dom": "16.8.5",
     "bootstrap": "^4.3.1",
+    "gh-pages": "^2.1.1",
     "node-sass": "^4.12.0",
     "react": "^16.9.0",
     "react-bootstrap": "^1.0.0-beta.11",
@@ -20,7 +22,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "yarn run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -36,5 +40,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "jest-junit": "^8.0.0"
   }
 }
