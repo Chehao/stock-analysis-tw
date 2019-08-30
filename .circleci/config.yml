@@ -58,7 +58,7 @@ jobs:
       - run:
           name: deploy to gh-pages
           command: |
-            yarn run deploy 
+            yarn run deploy | yes
          
 workflows:
   version: 2
