@@ -58,6 +58,7 @@ jobs:
       - run:
           name: deploy to gh-pages
           command: |
+            ssh -o StrictHostKeyChecking=no github.com
             yarn run deploy
          
 workflows:
