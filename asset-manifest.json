@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/stock-analysis-tw/static/css/main.128b9cb8.chunk.css",
+    "main.js": "/stock-analysis-tw/static/js/main.422992c0.chunk.js",
+    "main.js.map": "/stock-analysis-tw/static/js/main.422992c0.chunk.js.map",
+    "runtime~main.js": "/stock-analysis-tw/static/js/runtime~main.934530f3.js",
+    "runtime~main.js.map": "/stock-analysis-tw/static/js/runtime~main.934530f3.js.map",
+    "static/css/2.56909a4e.chunk.css": "/stock-analysis-tw/static/css/2.56909a4e.chunk.css",
+    "static/js/2.85f68a7f.chunk.js": "/stock-analysis-tw/static/js/2.85f68a7f.chunk.js",
+    "static/js/2.85f68a7f.chunk.js.map": "/stock-analysis-tw/static/js/2.85f68a7f.chunk.js.map",
+    "index.html": "/stock-analysis-tw/index.html",
+    "precache-manifest.e2d37afb5aee249dabbb4785cf251bed.js": "/stock-analysis-tw/precache-manifest.e2d37afb5aee249dabbb4785cf251bed.js",
+    "service-worker.js": "/stock-analysis-tw/service-worker.js",
+    "static/css/2.56909a4e.chunk.css.map": "/stock-analysis-tw/static/css/2.56909a4e.chunk.css.map",
+    "static/css/main.128b9cb8.chunk.css.map": "/stock-analysis-tw/static/css/main.128b9cb8.chunk.css.map"
+  }
+}
