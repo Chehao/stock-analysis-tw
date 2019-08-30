@@ -56,9 +56,9 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-        name: deploy to 
-        command: |
-          yarn run deploy gh-pages
+          name: deploy to gh-pages
+          command: |
+            yarn run deploy 
          
 workflows:
   version: 2
