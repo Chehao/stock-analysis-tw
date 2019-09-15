@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Col, Container, Nav, Navbar, NavDropdown, Row } from "react-bootstrap";
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
@@ -6,12 +6,49 @@ import { useDropzone } from "react-dropzone";
 import * as XLSX from 'xlsx';
 import "./App.css";
 import { columns } from "./AppColum";
+import * as _ from 'lodash';
 
-
+const rowClasses = (row: { 損益: number}, rowIndex: number) => {
+  // if (row.損益 > 0) {
+  //   return 'stock-raise'
+  // } else if (row.損益 < 0) {
+  //   return 'stock-fall'
+  // }
+  return ''
+};
+/*
+  {
+    "id": 0,
+    "成交": "2019-12-23T16:00:00.000Z",
+    "股票": "[2882]國泰金",
+    "交易": "整股",
+    "買賣別": "買",
+    "交易_1": "現股",
+    "成交_1": 1000,
+    "成交價": 46.7,
+    "價金": 46700,
+    "手續費": 39,
+    "交易稅": 0,
+    "應收": -46739,
+    "融資金額": 0,
+    "自備款": 0,
+    "融資券": 0,
+    "融券": 0,
+    "標借費": 0,
+    "利息": 0,
+    "二代健保": 0,
+    "損益": 0,
+    "交割日": "2019-12-25T16:00:00.000Z",
+    "幣別": "新台幣"
+  },
+*/
 const App: React.FC = props => {
   const [files, setFiles] = useState<File[]>([]);
   const [data, setData] = useState<object[]>(
     localStorage.getItem("stock") ? JSON.parse(localStorage.getItem("stock") as string): []
+  );
+  const [groupData, setGroupData] = useState<{[key: string]: any}>(
+    localStorage.getItem("stock") ? JSON.parse(localStorage.getItem("group-stock") as string): {}
   );
   const { getRootProps, getInputProps } = useDropzone({
     disabled: false,
@@ -36,9 +73,20 @@ const App: React.FC = props => {
                     ); // break; // 如果只取第一張表，就取消註釋這行
                 }
             }
-            const d = data.slice(1, -1).map( (n, i) => ({ id:i, ...n}) );
-            setData(d);
-            localStorage.setItem('stock', JSON.stringify(d));
+            const newData = data.slice(1, -1).map( (n, i) => ({ id:i, ...n}) );
+            const newGroupData = _.chain(newData).groupBy('股票').mapValues((v: {買賣別: string, 成交_1: number}[]) => {
+              const totalShares = v.filter((r: {買賣別: string, 成交_1: number}) => (r["買賣別"] === "買")).map(n => n["成交_1"]).reduce((sum, x) => sum + x) - 
+                v.filter((r: {買賣別: string, 成交_1: number}) => (r["買賣別"] === "賣")).map(n => n["成交_1"]).reduce((sum, x) => sum + x, 0)
+              return {
+                "明細": v,
+                "股數": totalShares
+              }  
+            }).value();
+            console.log(newGroupData)
+            setData(newData);
+            setGroupData(newGroupData)
+            localStorage.setItem('stock', JSON.stringify(newData));
+            localStorage.setItem('group-stock', JSON.stringify(newGroupData));
         } catch (e) {
             console.error(e);
             return;
@@ -47,11 +95,34 @@ const App: React.FC = props => {
       fileReader.readAsBinaryString(acceptedFiles[0]);
     }
   });
-  const fs = files.map(file => (
-    <li key={file.name}>
-      {file.name} - {file.size} bytes
-    </li>
-  ));
+  // const fs = files.map(file => (
+  //   <li key={file.name}>
+  //     {file.name} - {file.size} bytes
+  //   </li>
+  // ));
+  useEffect(() => {
+    console.log("useEffect");
+    groupData && Object.keys(groupData).forEach((key) => {
+      console.log(key);
+      const stockNo = key.split("]")[0].split("[")[1]
+      console.log()
+      const url = `/stock/api/getStockInfo.jsp?ex_ch=tse_${stockNo}.tw&json=1&delay=0&_=`;
+      fetch(url, {
+      }).then((response) => response.json())
+      .then(data => {
+        console.log(data.msgArray[0].z);
+        groupData[key]["市價"] = data.msgArray[0].z
+      }).catch(e => {
+        console.error("error on" + key);
+      })
+      ;
+      // var response = UrlFetchApp.fetch(url);
+      // var json = response.getContentText("UTF-8");
+      // var data = JSON.parse(json);
+      // return data.msgArray[0].z;
+    });
+  }, [groupData]);
+
   return (
     <div className="App">
       <Container>
@@ -92,6 +163,7 @@ const App: React.FC = props => {
           bordered={false}
           hover
           columns={columns}
+          rowClasses={rowClasses}
           pagination={paginationFactory({ sizePerPage: 50, showTotal: true, sizePerPageList: [25, 50, 100, 250, 500] })}
         />
         <Row>

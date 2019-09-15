@@ -1,0 +1,17 @@
+.stock-raise {
+  background-color: #e25252;
+}
+
+.stock-raise:hover {
+  background-color: #fa4646 !important;
+  opacity:0.6;
+}
+
+.stock-fall {
+  background-color: #6cdf6cc2;
+}
+
+.stock-fall:hover {
+  background-color: #6cdf6cc2 !important;
+  opacity:0.6;
+}
