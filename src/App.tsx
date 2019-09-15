@@ -1,49 +1,12 @@
 import React, { useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { Navbar, Nav, NavDropdown, Container, Row, Col } from "react-bootstrap";
+import { Col, Container, Nav, Navbar, NavDropdown, Row } from "react-bootstrap";
 import BootstrapTable from "react-bootstrap-table-next";
-import "./App.css";
-import * as XLSX from 'xlsx';
 import paginationFactory from "react-bootstrap-table2-paginator";
-import moment from 'moment';
+import { useDropzone } from "react-dropzone";
+import * as XLSX from 'xlsx';
+import "./App.css";
+import { columns } from "./AppColum";
 
-const columns = [
-  {
-    dataField: "id",
-    text: "ID",
-    sort: true
-  },
-  {
-    dataField: "成交",
-    text: "成交日期",
-    formatter: (cell: Date) => moment(cell).format('YYYY-MM-DD'),
-    sort: true
-  },
-  {
-    dataField: "股票",
-    text: "股票",
-    sort: true
-  },
-  {
-    dataField: "成交_1",
-    text: "成交量",
-    sort: true
-  },
-  { dataField: "價金",
-    text: "價金",
-    sort: true
-  },
-  {
-    dataField: "手續費",
-    text: "手續費",
-    sort: true
-  },
-  {
-    dataField: "損益",
-    text: "損益",
-    sort: true
-  }
-];
 
 const App: React.FC = props => {
   const [files, setFiles] = useState<File[]>([]);
@@ -127,6 +90,7 @@ const App: React.FC = props => {
           keyField="id"
           data={data}
           bordered={false}
+          hover
           columns={columns}
           pagination={paginationFactory({ sizePerPage: 50, showTotal: true, sizePerPageList: [25, 50, 100, 250, 500] })}
         />
