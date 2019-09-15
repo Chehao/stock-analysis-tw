@@ -93,7 +93,7 @@ const App: React.FC = props => {
     <div className="App">
       <Container>
         <Navbar collapseOnSelect expand="lg" bg="primary" variant="dark">
-          <Navbar.Brand href="#home">React-Bootstrap</Navbar.Brand>
+          <Navbar.Brand href="#home">元大投資xlsx匯入</Navbar.Brand>
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="mr-auto">
@@ -135,12 +135,12 @@ const App: React.FC = props => {
             <section className="container">
               <div {...getRootProps({ className: "dropzone disabled" })}>
                 <input {...getInputProps()} />
-                <p>Drag 'n' drop some files here, or click to select files</p>
+                <p>拖拉Excel匯入資料</p>
               </div>
-              <aside>
+              {/* <aside>
                 <h4>Files</h4>
                 <ul>{fs}</ul>
-              </aside>
+              </aside> */}
             </section>
           </Col>
         </Row>

@@ -55,6 +55,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project
+      - checkout    
       - run:
           name: deploy to gh-pages
           command: |
@@ -66,9 +67,9 @@ workflows:
   buld-deploy:
     jobs:
       - build
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master  
+      # - deploy:
+      #     requires:
+      #       - build
+      #     filters:
+      #       branches:
+      #         only: master  
