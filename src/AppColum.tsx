@@ -100,13 +100,13 @@ export const groupColumns = [
     }
   },
   {
-    dataField: "市值",
-    text: "市值",
+    dataField: "未實現損益",
+    text: "未實現損益",
     sort: true,
     headerStyle: { width: '150px' },
     style: { width: '150px' },
     formatter: (cell: string, row: TrsactionRow) => {
-      return Math.round(row.市價*row.股數)
+      return Math.round((row.市價 - row.平均價)*row.股數)
     }
   },
   {
