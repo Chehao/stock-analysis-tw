@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Col, Container, Nav, Navbar, NavDropdown, Row } from "react-bootstrap";
+import { Col, Container, Nav, Navbar, NavDropdown, Row, Tabs, Tab } from "react-bootstrap";
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import { useDropzone } from "react-dropzone";
 import * as XLSX from 'xlsx';
 import "./App.css";
-import { columns } from "./AppColum";
+import { columns, groupColumns } from "./AppColum";
 import * as _ from 'lodash';
 
 const rowClasses = (row: { 損益: number}, rowIndex: number) => {
@@ -16,6 +16,33 @@ const rowClasses = (row: { 損益: number}, rowIndex: number) => {
   // }
   return ''
 };
+export interface TrsactionRow {
+  "id": number,
+  "成交": Date,
+  "股票": string,
+  "交易": string,
+  "買賣別": string,
+  "交易_1": string,
+  "成交_1": number,
+  "成交價": number,
+  "價金": number,
+  "手續費": number,
+  "交易稅": number,
+  "應收": number,
+  "融資金額": number,
+  "自備款": number,
+  "融資券": number,
+  "融券": number,
+  "標借費": number,
+  "利息": number,
+  "二代健保": number,
+  "損益": number,
+  "交割日": Date,
+  "幣別": string,
+  "市價": number,
+  "平均價": number,
+  "股數": number,
+}
 /*
   {
     "id": 0,
@@ -50,6 +77,7 @@ const App: React.FC = props => {
   const [groupData, setGroupData] = useState<{[key: string]: any}>(
     localStorage.getItem("stock") ? JSON.parse(localStorage.getItem("group-stock") as string): {}
   );
+  const [key, setKey] = useState('transaction');
   const { getRootProps, getInputProps } = useDropzone({
     disabled: false,
     onDrop: acceptedFiles => {
@@ -74,12 +102,37 @@ const App: React.FC = props => {
                 }
             }
             const newData = data.slice(1, -1).map( (n, i) => ({ id:i, ...n}) );
-            const newGroupData = _.chain(newData).groupBy('股票').mapValues((v: {買賣別: string, 成交_1: number}[]) => {
-              const totalShares = v.filter((r: {買賣別: string, 成交_1: number}) => (r["買賣別"] === "買")).map(n => n["成交_1"]).reduce((sum, x) => sum + x) - 
-                v.filter((r: {買賣別: string, 成交_1: number}) => (r["買賣別"] === "賣")).map(n => n["成交_1"]).reduce((sum, x) => sum + x, 0)
+            const newGroupData = _.chain(newData).groupBy('股票').mapValues((details: TrsactionRow[], key: string) => {
+              const buyShares = details.filter((r: TrsactionRow) => (r["買賣別"] === "買"))
+              const buySharesNum = buyShares.map((r: TrsactionRow) => (r["成交_1"])).reduce((sum, x) => sum + x, 0)
+              const sellShares = details.filter((r: TrsactionRow) => (r["買賣別"] === "賣"))
+              const sellSharesNum = sellShares.map((r: TrsactionRow) => (r["成交_1"])).reduce((sum, x) => sum + x, 0)
+              const totalShares = buySharesNum - sellSharesNum
+              const income = sellShares.map((r: TrsactionRow) => (r["損益"])).reduce((sum, x) => sum + x, 0)
+              let matchSellShare = 0;
+              let remaindCoust = 0;
+              buyShares.forEach((d: TrsactionRow) => {
+                  matchSellShare = matchSellShare + d["成交_1"];
+                  if (matchSellShare > sellSharesNum) {
+                    if (matchSellShare - sellSharesNum <  d["成交_1"]) {
+                      remaindCoust = remaindCoust - (matchSellShare - sellSharesNum) * (d["成交價"] + d["手續費"]/d["成交_1"]);
+                    } else {
+                      remaindCoust = remaindCoust + d["應收"];
+                    }
+                    
+                  }
+
+              })
+              
+              // const totalCost =  details.filter((r: TrsactionRow) => (r["買賣別"] === "買")).map(n => n["應收"]).reduce((sum, x) => sum + x) + 
+              // details.filter((r: TrsactionRow) => (r["買賣別"] === "賣")).map(n => n["應收"]).reduce((sum, x) => sum + x, 0)  
               return {
-                "明細": v,
-                "股數": totalShares
+                "股票": key,
+                "明細": details,
+                "股數": totalShares,
+                "成本": -remaindCoust,
+                "平均價": (Math.round(-remaindCoust/totalShares*100)/100),
+                "損益": income
               }  
             }).value();
             console.log(newGroupData)
@@ -111,7 +164,7 @@ const App: React.FC = props => {
       }).then((response) => response.json())
       .then(data => {
         console.log(data.msgArray[0].z);
-        groupData[key]["市價"] = data.msgArray[0].z
+        groupData[key] = {...groupData[key], 市價: data.msgArray[0].z}
       }).catch(e => {
         console.error("error on" + key);
       })
@@ -121,6 +174,7 @@ const App: React.FC = props => {
       // var data = JSON.parse(json);
       // return data.msgArray[0].z;
     });
+    
   }, [groupData]);
 
   return (
@@ -155,17 +209,38 @@ const App: React.FC = props => {
             </Nav>
           </Navbar.Collapse>
         </Navbar>
-        <BootstrapTable
-          classes="table-sm"
-          bootstrap4
-          keyField="id"
-          data={data}
-          bordered={false}
-          hover
-          columns={columns}
-          rowClasses={rowClasses}
-          pagination={paginationFactory({ sizePerPage: 50, showTotal: true, sizePerPageList: [25, 50, 100, 250, 500] })}
-        />
+        <Tabs id="controlled-tab-example" activeKey={key} onSelect={(k: string) => setKey(k)}>
+          <Tab eventKey="transaction" title="Transaction">
+            <BootstrapTable
+              classes="table-sm"
+              bootstrap4
+              keyField="id"
+              data={data}
+              bordered={false}
+              hover
+              columns={columns}
+              rowClasses={rowClasses}
+              pagination={paginationFactory({ sizePerPage: 50, showTotal: true, sizePerPageList: [25, 50, 100, 250, 500] })}
+            />
+          </Tab>
+          <Tab eventKey="stock" title="Stock">
+            <BootstrapTable
+              classes="table-sm"
+              bootstrap4
+              keyField="股票"
+              data={Object.values(groupData)}
+              bordered={false}
+              hover
+              columns={groupColumns}
+              rowClasses={rowClasses}
+              pagination={paginationFactory({ sizePerPage: 50, showTotal: true, sizePerPageList: [25, 50, 100, 250, 500] })}
+            />
+          </Tab>
+          <Tab eventKey="contact" title="Contact" disabled>
+            ccc
+          </Tab>
+        </Tabs>
+        
         <Row>
           <Col>
             <section className="container">
