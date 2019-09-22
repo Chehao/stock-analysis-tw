@@ -1,7 +1,7 @@
 {
   "name": "stock-analysis-tw",
   "version": "0.1.0",
-  "homepage": "https://chehao.github.io/stock-analysis-tw/",
+  "homepage": "https://chehao.github.io/",
   "private": true,
   "dependencies": {
     "@types/jest": "24.0.17",
@@ -15,6 +15,7 @@
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "node-sass": "^4.12.0",
+    "pkg": "^4.4.0",
     "react": "^16.9.0",
     "react-bootstrap": "^1.0.0-beta.11",
     "react-bootstrap-table-next": "^3.1.8",
@@ -23,6 +24,7 @@
     "react-dom": "^16.9.0",
     "react-dropzone": "^10.1.8",
     "react-scripts": "3.1.1",
+    "tabletop": "^1.5.2",
     "typescript": "^3.6.1-rc",
     "xlsx": "^0.15.1"
   },
@@ -32,7 +34,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "yarn run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "server": "node server.js",
+    "pkg": "pkg -t win package.json"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -50,7 +54,14 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-syntax-export-default-from": "^7.2.0",
     "@types/lodash": "^4.14.138",
     "jest-junit": "^8.0.0"
+  },
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "build/**/*"
+    ]
   }
 }

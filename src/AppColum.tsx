@@ -1,13 +1,43 @@
 import moment from "moment";
 import { TrsactionRow } from "./App";
+import { Badge, Button } from "react-bootstrap";
+import React from "react";
+
+export const upDownFormat = (cell: number, row: TrsactionRow) => {
+  const value =
+    cell > 0 ? (
+      <Badge variant="danger">{numberFormat(cell)}</Badge>
+    ) : cell < 0 ? (
+      <Badge variant="success">{numberFormat(cell)}</Badge>
+    ) : (
+      <Badge variant="light">0</Badge>
+    );
+  return <h5>{value}</h5>;
+};
+
+export const upDownFormatPercentage = (cell: number, row: TrsactionRow) => {
+  const value =
+    cell > 0 ? (
+      <Badge variant="danger">{cell}%</Badge>
+    ) : cell < 0 ? (
+      <Badge variant="success">{cell}%</Badge>
+    ) : (
+      <Badge variant="light">0%</Badge>
+    );
+  return <h5>{value}</h5>;
+};
+
+export const numberFormat = (value: number) => {
+  return new Intl.NumberFormat("en").format(Math.trunc(value));
+};
 
 export const columns = [
   {
     dataField: "id",
     text: "ID",
     sort: true,
-    headerStyle: { width: '40px' },
-    style: { width: '40px' },
+    headerStyle: { width: "40px" },
+    style: { width: "40px" }
   },
   {
     dataField: "成交",
@@ -19,13 +49,15 @@ export const columns = [
     dataField: "股票",
     text: "股票",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
+    headerStyle: { width: "150px" },
+    style: { width: "150px" }
   },
   {
     dataField: "買賣別",
     text: "買賣別",
-    style: (cell: string) => { return cell === "買" ? {color: 'red'} : {color: 'green'} }
+    style: (cell: string) => {
+      return cell === "買" ? { color: "red" } : { color: "green" };
+    }
   },
   {
     dataField: "成交_1",
@@ -56,64 +88,126 @@ export const columns = [
     dataField: "損益",
     text: "損益",
     sort: true,
-    style: (cell: number) => { return cell > 0 ? {color: 'white', backgroundColor: '#e25252'} : (cell < 0 ? {color: 'white', backgroundColor: '#6cdf6cc2'} : {}) }
+    // style: (cell: number) => { return cell > 0 ? {color: 'white', backgroundColor: '#e25252'} : (cell < 0 ? {color: 'white', backgroundColor: '#6cdf6cc2'} : {}) }
+    formatter: upDownFormat
   }
 ];
 
-export const groupColumns = [
+export const groupColumns = (setModalShow: (v: boolean) => void, setStockDetail: (detail: TrsactionRow[]) => void) => [
   {
     dataField: "股票",
     text: "股票",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
+    headerStyle: { width: "150px" },
+    style: { width: "150px" },
+    formatter: (cell: string, row: TrsactionRow) => {
+      const onClick = (e: any) => {
+        setStockDetail(row.明細);
+        setModalShow(true);
+      }
+      return <Button variant="link" onClick={onClick}>{cell}</Button>
+    }
   },
   {
     dataField: "市價",
     text: "市價",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
+    headerStyle: { width: "100px" },
+    style: { width: "100px" }
   },
   {
-    dataField: "平均價",
-    text: "平均價",
+    dataField: "均價",
+    text: "均價",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
+    headerStyle: { width: "80px" },
+    style: { width: "80px" },
+    formatter: (cell: number, row: TrsactionRow) => {
+      if (cell > 0) {
+        const value = row.市價 && row.市價 > cell ? (
+          <Badge variant="danger">{numberFormat(cell)}</Badge>
+        ) : row.市價 && row.市價 < cell ? (
+          <Badge variant="success">{numberFormat(cell)}</Badge>
+        ) : (
+          <Badge variant="light">{numberFormat(cell)}</Badge>
+        );
+        return value;
+      }
+      return 0;
+    }
+  },
+  {
+    dataField: "成本",
+    text: "成本",
+    align: "right",
+    headerAlign: "right",
+    sort: true,
+    headerStyle: { width: "150px" },
+    style: { width: "150px" },
+    formatter: numberFormat
   },
   {
     dataField: "股數",
     text: "股數",
+    align: "right",
+    headerAlign: "right",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
+    headerStyle: { width: "150px" },
+    style: { width: "150px" },
+    formatter: numberFormat
+  }, 
+  {
+    dataField: "市值",
+    text: "市值 ",
+    sort: true,
+    align: "right",
+    headerAlign: "right",
+    headerStyle: { width: "150px" },
+    style: { width: "150px" },
+    formatter: numberFormat
   },
   {
     dataField: "目前損益",
-    text: "目前損益",
+    text: "損益%",
+    align: "right",
+    headerAlign: "right",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
-    formatter: (cell: string, row: TrsactionRow) => {
-      return  row.平均價 ? `${Math.round((row.市價 - row.平均價)/row.平均價*10000)/100}%`: 'N/A';
-    }
+    headerStyle: { width: "150px" },
+    style: { width: "150px" },
+    formatter: upDownFormatPercentage
   },
   {
     dataField: "未實現損益",
     text: "未實現損益",
+    align: "right",
+    headerAlign: "right",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
-    formatter: (cell: string, row: TrsactionRow) => {
-      return Math.round((row.市價 - row.平均價)*row.股數)
-    }
+    headerStyle: { width: "150px" },
+    style: { width: "150px" },
+    formatter: upDownFormat
   },
   {
     dataField: "損益",
     text: "已實現損益",
+    align: "right",
+    headerAlign: "right",
     sort: true,
-    headerStyle: { width: '150px' },
-    style: { width: '150px' },
+    headerStyle: { width: "150px" },
+    style: { width: "150px" },
+    formatter: upDownFormat
   }
 ];
+
+export const detailColumns = [
+  ...columns, 
+  {
+    dataField: "庫存數",
+    text: "庫存數",
+    sort: true
+  },
+  {
+    dataField: "未實現損益",
+    text: "未實現損益 ",
+    sort: true,
+    formatter: upDownFormat
+  }
+]
