@@ -1,9 +1,9 @@
 import moment from "moment";
-import { TrsactionRow } from "./App";
+import { TransactionRow } from "./App";
 import { Badge, Button } from "react-bootstrap";
 import React from "react";
 
-export const upDownFormat = (cell: number, row: TrsactionRow) => {
+export const upDownFormat = (cell: number, row: TransactionRow) => {
   const value =
     cell > 0 ? (
       <Badge variant="danger">{numberFormat(cell)}</Badge>
@@ -15,7 +15,7 @@ export const upDownFormat = (cell: number, row: TrsactionRow) => {
   return <h5>{value}</h5>;
 };
 
-export const upDownFormatPercentage = (cell: number, row: TrsactionRow) => {
+export const upDownFormatPercentage = (cell: number, row: TransactionRow) => {
   const value =
     cell > 0 ? (
       <Badge variant="danger">{cell}%</Badge>
@@ -27,8 +27,8 @@ export const upDownFormatPercentage = (cell: number, row: TrsactionRow) => {
   return <h5>{value}</h5>;
 };
 
-export const numberFormat = (value: number) => {
-  return new Intl.NumberFormat("en").format(Math.trunc(value));
+export const numberFormat = (value: number, fixed = 0) => {
+  return (value || 0).toFixed(fixed);
 };
 
 export const columns = [
@@ -49,8 +49,8 @@ export const columns = [
     dataField: "股票",
     text: "股票",
     sort: true,
-    headerStyle: { width: "150px" },
-    style: { width: "150px" }
+    headerStyle: { width: "120px" },
+    style: { width: "120px" }
   },
   {
     dataField: "買賣別",
@@ -93,43 +93,51 @@ export const columns = [
   }
 ];
 
-export const groupColumns = (setModalShow: (v: boolean) => void, setStockDetail: (detail: TrsactionRow[]) => void) => [
+export const groupColumns = (
+  setModalShow: (v: boolean) => void,
+  setStockDetail: (detail: TransactionRow[]) => void
+) => [
   {
     dataField: "股票",
     text: "股票",
     sort: true,
-    headerStyle: { width: "150px" },
-    style: { width: "150px" },
-    formatter: (cell: string, row: TrsactionRow) => {
+    headerStyle: { width: "120px" },
+    style: { width: "120px" },
+    formatter: (cell: string, row: TransactionRow) => {
       const onClick = (e: any) => {
         setStockDetail(row.明細);
         setModalShow(true);
-      }
-      return <Button variant="link" onClick={onClick}>{cell}</Button>
+      };
+      return (
+        <Button variant="link" onClick={onClick}>
+          {cell}
+        </Button>
+      );
     }
   },
   {
     dataField: "市價",
     text: "市價",
     sort: true,
-    headerStyle: { width: "100px" },
-    style: { width: "100px" }
+    headerStyle: { width: "50px" },
+    style: { width: "50px" }
   },
   {
     dataField: "均價",
     text: "均價",
     sort: true,
-    headerStyle: { width: "80px" },
-    style: { width: "80px" },
-    formatter: (cell: number, row: TrsactionRow) => {
+    headerStyle: { width: "50px" },
+    style: { width: "50px" },
+    formatter: (cell: number, row: TransactionRow) => {
       if (cell > 0) {
-        const value = row.市價 && row.市價 > cell ? (
-          <Badge variant="danger">{numberFormat(cell)}</Badge>
-        ) : row.市價 && row.市價 < cell ? (
-          <Badge variant="success">{numberFormat(cell)}</Badge>
-        ) : (
-          <Badge variant="light">{numberFormat(cell)}</Badge>
-        );
+        const value =
+          row.市價 && row.市價 > cell ? (
+            <Badge variant="danger">{numberFormat(cell, 2)}</Badge>
+          ) : row.市價 && row.市價 < cell ? (
+            <Badge variant="success">{numberFormat(cell, 2)}</Badge>
+          ) : (
+            <Badge variant="light">{numberFormat(cell, 2)}</Badge>
+          );
         return value;
       }
       return 0;
@@ -141,8 +149,8 @@ export const groupColumns = (setModalShow: (v: boolean) => void, setStockDetail:
     align: "right",
     headerAlign: "right",
     sort: true,
-    headerStyle: { width: "150px" },
-    style: { width: "150px" },
+    headerStyle: { width: "90px" },
+    style: { width: "90px" },
     formatter: numberFormat
   },
   {
@@ -151,18 +159,18 @@ export const groupColumns = (setModalShow: (v: boolean) => void, setStockDetail:
     align: "right",
     headerAlign: "right",
     sort: true,
-    headerStyle: { width: "150px" },
-    style: { width: "150px" },
+    headerStyle: { width: "90px" },
+    style: { width: "90px" },
     formatter: numberFormat
-  }, 
+  },
   {
     dataField: "市值",
     text: "市值 ",
     sort: true,
     align: "right",
     headerAlign: "right",
-    headerStyle: { width: "150px" },
-    style: { width: "150px" },
+    headerStyle: { width: "90px" },
+    style: { width: "90px" },
     formatter: numberFormat
   },
   {
@@ -171,8 +179,8 @@ export const groupColumns = (setModalShow: (v: boolean) => void, setStockDetail:
     align: "right",
     headerAlign: "right",
     sort: true,
-    headerStyle: { width: "150px" },
-    style: { width: "150px" },
+    headerStyle: { width: "90px" },
+    style: { width: "90px" },
     formatter: upDownFormatPercentage
   },
   {
@@ -181,8 +189,8 @@ export const groupColumns = (setModalShow: (v: boolean) => void, setStockDetail:
     align: "right",
     headerAlign: "right",
     sort: true,
-    headerStyle: { width: "150px" },
-    style: { width: "150px" },
+    headerStyle: { width: "90px" },
+    style: { width: "90px" },
     formatter: upDownFormat
   },
   {
@@ -191,14 +199,24 @@ export const groupColumns = (setModalShow: (v: boolean) => void, setStockDetail:
     align: "right",
     headerAlign: "right",
     sort: true,
-    headerStyle: { width: "150px" },
-    style: { width: "150px" },
+    headerStyle: { width: "90px" },
+    style: { width: "90px" },
+    formatter: upDownFormat
+  },
+  {
+    dataField: "配息",
+    text: "配息",
+    align: "right",
+    headerAlign: "right",
+    sort: true,
+    headerStyle: { width: "90px" },
+    style: { width: "90px" },
     formatter: upDownFormat
   }
 ];
 
 export const detailColumns = [
-  ...columns, 
+  ...columns,
   {
     dataField: "庫存數",
     text: "庫存數",
@@ -210,4 +228,4 @@ export const detailColumns = [
     sort: true,
     formatter: upDownFormat
   }
-]
+];

@@ -19,3 +19,35 @@
 .modal-90w {
   width: 90%;
 }
+
+.scroll-table {
+  table-layout: fixed;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.scroll-table thead {
+  display:table;
+  width: 100%;
+  table-layout:fixed;
+}
+
+.scroll-table tbody{
+  table-layout: fixed;
+  width: fit-content;
+  height: 700px;
+  overflow-y: scroll !important;
+  display:block;
+}
+
+.scroll-table tbody tr {
+  display:table;
+  width:100%;
+  table-layout:fixed;
+}
+
+.wrapper {
+  overflow-x: scroll auto;
+  overflow-y: hidden;
+  width: 100%;
+}

@@ -9,6 +9,9 @@ import "./App.css";
 import { columns, groupColumns } from "./AppColum";
 import StockDetailModal from "./StockDetailModal";
 
+const Discount = 0.6;
+const HandingFee = 0.001425;
+const TransactionTax = 0.003;
 const rowClasses = (row: { 損益: number }, rowIndex: number) => {
   // if (row.損益 > 0) {
   //   return 'stock-raise'
@@ -17,7 +20,7 @@ const rowClasses = (row: { 損益: number }, rowIndex: number) => {
   // }
   return "";
 };
-export interface TrsactionRow {
+export interface TransactionRow {
   id: number;
   成交: Date;
   股票: string;
@@ -44,9 +47,11 @@ export interface TrsactionRow {
   均價: number;
   股數: number;
   目前損益?: number;
-  明細: TrsactionRow[];
+  明細: TransactionRow[];
   未實現損益?: number;
-  庫存數?: number;
+  庫存數: number;
+  庫存成本: number;
+  配息?: number;
 }
 /*
   {
@@ -77,7 +82,7 @@ export interface TrsactionRow {
 const App: React.FC = props => {
   const [files, setFiles] = useState<File[]>([]);
   const [modalShow, setModalShow] = useState(false);
-  const [stockDetail, setStockDetail] = useState<TrsactionRow[]>([]);
+  const [stockDetail, setStockDetail] = useState<TransactionRow[]>([]);
   const [data, setData] = useState<object[]>(
     localStorage.getItem("stock") ? JSON.parse(localStorage.getItem("stock") as string) : []
   );
@@ -111,39 +116,49 @@ const App: React.FC = props => {
               data = data.concat(XLSX.utils.sheet_to_json(workbook.Sheets[sheet])); // break; // 如果只取第一張表，就取消註釋這行
             }
           }
-          const newData = data.slice(1, -1).map((n, i) => ({ id: i, ...n }));
+          const newData = data.slice(1).map((n, i) => ({ id: i, ...n }));
           const newGroupData = _.chain(newData)
             .groupBy("股票")
-            .mapValues((details: TrsactionRow[], key: string) => {
-              const buyShares = details.filter((r: TrsactionRow) => r["買賣別"] === "買");
-              const buySharesNum = buyShares.map((r: TrsactionRow) => r["成交_1"]).reduce((sum, x) => sum + x, 0);
-              const sellShares = details.filter((r: TrsactionRow) => r["買賣別"] === "賣");
-              const sellSharesNum = sellShares.map((r: TrsactionRow) => r["成交_1"]).reduce((sum, x) => sum + x, 0);
-              const totalShares = buySharesNum - sellSharesNum;
-              const income = sellShares.map((r: TrsactionRow) => r["損益"]).reduce((sum, x) => sum + x, 0);
-              let matchSellShare = 0;
+            .mapValues((details: TransactionRow[], key: string) => {
+              const buyShares = details.filter((r: TransactionRow) => r.買賣別 === "買");
+              const buySharesNum = buyShares.map((r: TransactionRow) => r.成交_1).reduce((sum, x) => sum + x, 0);
+              const sellShares = details.filter((r: TransactionRow) => r.買賣別 === "賣");
+              const sellSharesNum = sellShares.map((r: TransactionRow) => r.成交_1).reduce((sum, x) => sum + x, 0);
+              // const totalShares = buySharesNum - sellSharesNum;
+              const income = sellShares.map((r: TransactionRow) => r.損益).reduce((sum, x) => sum + x, 0);
+              const dividend = details.filter((r: TransactionRow) => r.買賣別 === "配息").map((r: TransactionRow) => r.損益).reduce((sum, x) => sum + x, 0);
+              let totalMatchShare = 0;
               let remaindCoust = 0;
-              buyShares.forEach((d: TrsactionRow) => {
-                matchSellShare = matchSellShare + d["成交_1"];
-                if (matchSellShare > sellSharesNum) {
-                  if (matchSellShare - sellSharesNum < d["成交_1"]) {
-                    remaindCoust =
-                      remaindCoust - (matchSellShare - sellSharesNum) * (d["成交價"] + d["手續費"] / d["成交_1"]);
-                  } else {
-                    remaindCoust = remaindCoust + d["應收"];
+              const newDetail = details.map((d: TransactionRow) => {
+                let remainStack = 0;
+                if (d.買賣別 === "買" || d.買賣別 === "配股") {
+                  totalMatchShare += d.成交_1;
+                  remainStack = 0;
+                  if (totalMatchShare > sellSharesNum) {
+                    if (totalMatchShare - sellSharesNum < d.成交_1) {
+                      remainStack = totalMatchShare - sellSharesNum;
+                      remaindCoust =
+                        remaindCoust - (totalMatchShare - sellSharesNum) * (d.成交價 + d.手續費 / d.成交_1);
+                    } else {
+                      remainStack = d.成交_1;
+                      remaindCoust = remaindCoust + d.應收;
+                    }
                   }
                 }
+                return {...d, 庫存數: remainStack, 庫存成本: d.成交價 * remainStack * ( 1 + HandingFee * Discount)}
               });
 
-              // const totalCost =  details.filter((r: TrsactionRow) => (r["買賣別"] === "買")).map(n => n["應收"]).reduce((sum, x) => sum + x) +
-              // details.filter((r: TrsactionRow) => (r["買賣別"] === "賣")).map(n => n["應收"]).reduce((sum, x) => sum + x, 0)
+              const totalShares = newDetail.map((n: TransactionRow) => (n.庫存數 || 0)).reduce((sum: number, x: number) => sum + x, 0);
+
+              // details.filter((r: TransactionRow) => (r["買賣別"] === "賣")).map(n => n["應收"]).reduce((sum, x) => sum + x, 0)
               return {
                 股票: key,
-                明細: details,
+                明細: newDetail,
                 股數: totalShares,
                 成本: -remaindCoust,
                 均價: Math.round((-remaindCoust / totalShares) * 100) / 100,
-                損益: income
+                損益: income,
+                配息: dividend
               };
             })
             .value();
@@ -173,46 +188,38 @@ const App: React.FC = props => {
         .then(data => {
           console.log(data.msgArray[0].z);
           const item = groupData[key];
-          const sellShares = item.明細.filter((r: TrsactionRow) => r["買賣別"] === "賣");
+          const sellShares = item.明細.filter((r: TransactionRow) => r["買賣別"] === "賣");
           const allSellSharesNum = sellShares
-            .map((r: TrsactionRow) => r["成交_1"])
+            .map((r: TransactionRow) => r["成交_1"])
             .reduce((sum: number, x: number) => sum + x, 0);
-          let totalMatchShare = 0;
-          let details = item.明細.map((n: TrsactionRow) => {
-            if (n.買賣別 === "買") {
-              totalMatchShare += n.成交_1;
-              let remaindStack = n.成交_1;
-              if (totalMatchShare > allSellSharesNum) {
-                if (totalMatchShare - allSellSharesNum < n.成交_1) {
-                  remaindStack = totalMatchShare - allSellSharesNum;
-                }
-              } else {
-                remaindStack = 0;
-              }
+          let details = item.明細.map((n: TransactionRow) => {
+            if (n.買賣別 === "買" || n.買賣別 === "配股") {
               return {
                 ...n,
                 市價: parseFloat(data.msgArray[0].z),
-                庫存數: remaindStack,
-                未實現損益: data.msgArray[0].z * remaindStack * ( 1- 0.001425 - 0.0003)  - n.成交價 * remaindStack * ( 1 + 0.001425)
+                未實現損益: data.msgArray[0].z * n.庫存數 * ( 1 - HandingFee - TransactionTax)  - n.庫存成本
               };
             } else {
               return { ...n, 市價: parseFloat(data.msgArray[0].z) };
             }
           })
-          const totalUnIncome = details.map((n: TrsactionRow) => (n.未實現損益 || 0)).reduce((sum: number, x: number) => sum + x, 0);
-          const totalRemain = details.map((n: TrsactionRow) => (n.庫存數 || 0)).reduce((sum: number, x: number) => sum + x, 0);
+          const totalUnIncome = details.map((n: TransactionRow) => (n.未實現損益 || 0)).reduce((sum: number, x: number) => sum + x, 0);
+          const totalIncome = details.map((n: TransactionRow) => (n.損益 || 0)).reduce((sum: number, x: number) => sum + x, 0);
+          const totalRemain = details.map((n: TransactionRow) => (n.庫存數 || 0)).reduce((sum: number, x: number) => sum + x, 0);
           details.push({
             id: -1,
             股票: "總計",
             庫存數: totalRemain,
+            損益: totalIncome,
             未實現損益: totalUnIncome,
           })
           return {
             ...item,
+            股數: totalRemain,
             市價: parseFloat(data.msgArray[0].z),
-            市值: data.msgArray[0].z * item.股數,
+            市值: data.msgArray[0].z * totalRemain,
             目前損益: item.均價 ? Math.round(((data.msgArray[0].z - item.均價) / item.均價) * 10000) / 100 : 0,
-            未實現損益: item.均價 ? Math.round((data.msgArray[0].z - item.均價) * item.股數) : 0,
+            未實現損益: totalUnIncome,
             明細: details
           };
         })
@@ -233,6 +240,7 @@ const App: React.FC = props => {
       const totalIncome = datas.map(n => n.損益).reduce((sum, x) => sum + x, 0);
       const totalShare = datas.map(n => n.股數).reduce((sum, x) => sum + x, 0);
       const totalUnIncome = datas.map(n => n.未實現損益).reduce((sum, x) => sum + x, 0);
+      const totalDividend = datas.map(n => n.配息 ).reduce((sum: number, x: number) => sum + x, 0);
       console.log("未實現損益", totalUnIncome);
       newGroup["總損益"] = {
         股票: "總計",
@@ -241,7 +249,8 @@ const App: React.FC = props => {
         市值: totalValue,
         目前損益: Math.round((totalUnIncome / totalCost) * 10000) / 100,
         未實現損益: totalUnIncome,
-        損益: totalIncome
+        損益: totalIncome,
+        配息: totalDividend
       };
       setGroupData(newGroup);
     });
@@ -276,8 +285,9 @@ const App: React.FC = props => {
         <Tabs id="controlled-tab-example" activeKey={key} onSelect={(k: string) => setKey(k)}>
           <Tab eventKey="stock" title="股票庫存">
             <BootstrapTable
-              classes="table-sm"
+              classes="table-sm scroll-table"
               bootstrap4
+              wrapperClasses="wrapper"
               keyField="股票"
               data={Object.values(groupData)}
               bordered={false}

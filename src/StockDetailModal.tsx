@@ -1,12 +1,12 @@
 import React, { Component } from "react";
 import { Modal } from "react-bootstrap";
 import BootstrapTable from "react-bootstrap-table-next";
-import { TrsactionRow } from "./App";
-import { columns, upDownFormat, detailColumns } from "./AppColum";
+import { TransactionRow } from "./App";
+import { detailColumns } from "./AppColum";
 import paginationFactory from "react-bootstrap-table2-paginator";
 
 interface Props {
-  data: TrsactionRow[];
+  data: TransactionRow[];
   show: boolean;
   onHide: () => void;
 }
