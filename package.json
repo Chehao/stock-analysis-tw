@@ -14,7 +14,7 @@
     "lodash": "^4.17.19",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.1",
-    "node-sass": "^4.13.1",
+    "node-sass": "^7.0.0",
     "pkg": "^4.4.0",
     "react": "^16.9.0",
     "react-bootstrap": "^1.0.0-beta.11",
