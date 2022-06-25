@@ -13,7 +13,7 @@
     "gh-pages": "^2.1.1",
     "lodash": "^4.17.19",
     "moment": "^2.24.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "node-sass": "^4.13.1",
     "pkg": "^4.4.0",
     "react": "^16.9.0",
